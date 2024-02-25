@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "plaid-investments"
+version = "0.1.0"
+description = ""
+authors = ["J. Garcia <janikgar@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+python-dotenv = "^1.0.1"
+requests = "^2.31.0"
+plaid-python = "^18.4.0"
+black = "^24.2.0"
+flask = "^3.0.2"
+coverage = "^7.4.3"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.1"
+pook = "^1.4.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning"
+]

@@ -7,10 +7,12 @@
 {% endblock %}
 
 {% block content %}
-<form>
-  <input type="text" id="username">
-  <input type="password" id="password">
-  <button type="button" id="login-submit">
+<form method="post">
+  <label for="username">Username</label>
+  <input type="text" id="username" name="username" required>
+  <label for="password">Password</label>
+  <input type="password" id="password" name="password" required>
+  <button type="submit" id="login-submit">
     <strong>Login</strong>
   </button>
 </form>

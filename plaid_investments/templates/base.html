@@ -6,7 +6,8 @@
   <meta http-equiv='X-UA-Compatible' content='IE=edge'>
   <title>Plaid Investments - {% block title %}{% endblock %}</title>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
-  <link rel="stylesheet" href="https://unpkg.com/mvp.css">
+  <!--<link rel="stylesheet" href="https://unpkg.com/mvp.css">-->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
   <link rel='stylesheet' type='text/css' media='screen' href='{{ url_for('static', filename='link.css') }}'>
   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
@@ -14,9 +15,14 @@
 <body>
   <nav>
     <ul>
-      <li><a href="/auth/register">Regiser</a></li>
-      <li><a href="/auth/login">Login</a></li>
+      <li><a href="/index">Home</a></li>
+      {% if g.user %}
       <li><a href="/link">Link</a></li>
+      <li><a href="/auth/logout">Logout</a></li>
+      {% else %}
+      <li><a href="/auth/register">Register</a></li>
+      <li><a href="/auth/login">Login</a></li>
+      {% endif %}
     </ul>
   </nav>
   <main id="root">
@@ -31,8 +37,7 @@
       {% block content %}{% endblock %}
     </section>
   </main>
-  <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
-  <script src='{{ url_for('static', filename='link.js' ) }}'></script>
+  {% block scripts %}{% endblock %}
 </body>
 
 </html>

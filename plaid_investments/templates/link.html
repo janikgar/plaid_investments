@@ -12,3 +12,8 @@
 </button>
 <pre id="response"></pre>
 {% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+<script src='{{ url_for('static', filename='link.js' ) }}'></script>
+{% endblock %}

@@ -1,0 +1,10 @@
+version: '3'
+tasks:
+  run:
+    cmds: 
+      - flask --app plaid_investments run --debug
+  test:
+    cmds:
+      - coverage run --branch -m pytest
+      - coverage html
+      - pwsh.exe -command start-process .\\htmlcov\\index.html

@@ -113,6 +113,8 @@ def create_app(test_config: dict = None) -> Flask:
                 session.clear()
                 session["user_id"] = user["id"]
                 return redirect(url_for("index"))
+            else:
+                flash(error)
 
         return render_template("login.html")
 

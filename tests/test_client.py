@@ -5,17 +5,11 @@ from plaid.api import plaid_api
 
 pook.on()
 
-# pook.get(pook.regex(".*"))
+def test_client_type(plaid_client: Client):
+    assert type(plaid_client) == Client
+    assert pook.unmatched() == 0
 
-class TestClient:
-    def test_client_type(self):
-        client = Client("", "", "sandbox")
-        assert type(client) == Client
-        assert pook.unmatched() == 0
-
-    def test_client_plaid_client_type(self):
-        assert pook.isactive() == True
-        client = Client("", "", "sandbox")
-        client.init_plaid_client()
-        assert type(client.plaid_client) == plaid_api.PlaidApi
-        assert pook.unmatched() == 0
+def test_client_plaid_client_type(plaid_client: Client):
+    plaid_client.init_plaid_client()
+    assert type(plaid_client.plaid_client) == plaid_api.PlaidApi
+    assert pook.unmatched() == 0

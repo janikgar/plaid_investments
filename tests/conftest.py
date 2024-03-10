@@ -3,6 +3,7 @@ import tempfile
 
 import pytest
 from plaid_investments import create_app
+from plaid_investments.client import Client
 from plaid_investments.db import get_db, init_db
 from flask import Flask
 from flask.testing import FlaskClient, FlaskCliRunner
@@ -34,7 +35,7 @@ def app() -> Flask:
 
 
 @pytest.fixture
-def client(app) -> FlaskClient:
+def flask_client(app) -> FlaskClient:
     return app.test_client()
 
 
@@ -42,10 +43,14 @@ def client(app) -> FlaskClient:
 def runner(app) -> FlaskCliRunner:
     return app.test_cli_runner()
 
+@pytest.fixture
+def plaid_client():
+    return Client("", "", "sandbox")
+
 
 class AuthActions(object):
-    def __init__(self, client: FlaskClient):
-        self._client: FlaskClient = client
+    def __init__(self, flask_client: FlaskClient):
+        self._client: FlaskClient = flask_client
 
     def login(self, username="test", password="test"):
         return self._client.post(
@@ -58,5 +63,5 @@ class AuthActions(object):
 
 
 @pytest.fixture
-def auth(client):
-    return AuthActions(client)
+def auth(flask_client):
+    return AuthActions(flask_client)

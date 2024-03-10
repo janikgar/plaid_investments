@@ -24,11 +24,7 @@ class Client:
         self.plaid_client: plaid_api.PlaidApi = plaid_api.PlaidApi
 
     def init_plaid_client(self):
-        host = plaid.Environment.Sandbox
-        if self.env == "development":
-            host = plaid.Environment.Development
-        elif self.env == "production":
-            host = plaid.Environment.Production
+        host = self.env
 
         config = plaid.Configuration(host=host, api_key=self.api_key)
 
@@ -36,21 +32,6 @@ class Client:
         client = plaid_api.PlaidApi(api_client)
 
         self.plaid_client = client
-
-    def list_institutions(self):
-        institution_get = InstitutionsGetRequest(
-            count=(1), offset=(0), country_codes=([CountryCode("US")])
-        )
-        print(self.plaid_client.institutions_get(institution_get))
-
-    def get_temp_token(self):
-        if self.env == "sandbox":
-            request = SandboxPublicTokenCreateRequest(
-                institution_id=("ins_130958"),
-                initial_products=[Products("assets"), Products("transactions")],
-            )
-            response = self.plaid_client.sandbox_public_token_create(request)
-            print(response)
 
     def create_link_token(self, client_user_id: str) -> dict:
         req = LinkTokenCreateRequest(
@@ -61,7 +42,6 @@ class Client:
             user=LinkTokenCreateRequestUser(
                 client_user_id=client_user_id,
             ),
-            # redirect_uri='/api/redirect',
         )
         res = self.plaid_client.link_token_create(req)
 

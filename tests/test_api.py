@@ -3,8 +3,10 @@ from datetime import datetime
 
 import pytest
 import pook
+import uuid
 from flask.testing import FlaskClient
 from plaid.model.link_token_create_response import LinkTokenCreateResponse
+from plaid.model.item_public_token_exchange_response import ItemPublicTokenExchangeResponse
 
 
 @pytest.fixture(autouse=True)
@@ -33,12 +35,25 @@ def test_create_link_token(flask_client: FlaskClient):
     assert response.status_code == 200
 
 
-# def test_exchange_public_token(flask_client: FlaskClient):
-#     response = flask_client.post(
-#         "/api/exchange_public_token",
-#         data={"public_token": "0123456"},
-#         headers={
-#             "Content-Type": "application/json",
-#         },
-#     )
-#     assert response.data == None
+def test_exchange_public_token(flask_client: FlaskClient):
+    response_dict = {
+        "access_token": str(uuid.uuid4()),
+        "item_id": "foo",
+        "request_id": "bar",
+    }
+    pook.post(
+        "https://sandbox.plaid.com:443/item/public_token/exchange",
+        response=ItemPublicTokenExchangeResponse(
+            str(uuid.uuid4()),
+            "foo",
+            "bar",
+            _body=json.dumps(response_dict),
+            _headers="",
+            _status=200,
+        ),
+    )
+    response = flask_client.post(
+        "/api/exchange_public_token",
+        json={"public_token": f"access-test-{str(uuid.uuid4())}"},
+    )
+    assert response.status_code == 200

@@ -7,9 +7,31 @@
 {% endblock %}
 
 {% block content %}
+{% if accounts | length > 0 %}
+<table>
+  <thead>Accounts</thead>
+  <tr>
+    <th>Account</th>
+    <th>Actions</th>
+  </tr>
+  {% for account in accounts %}
+  <tr>
+    <td>{{ account['item_id'] }}</td>
+    <td><button>Get Balance</button></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
 <button type="button" id="link-account">
   <strong>Link account</strong>
 </button>
+<form id="friendly-name" hidden>
+  <label for="friendly-name-input">Friendly Name</label>
+  <input type="text" id="friendly-name-input">
+  <button type="button" id="add-account">
+    <strong>Add Account</strong>
+  </button>
+</form>
 <pre id="response"></pre>
 {% endblock %}
 

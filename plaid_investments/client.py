@@ -8,6 +8,7 @@ from plaid.model.country_code import CountryCode
 from plaid.model.products import Products
 from plaid.model.link_token_create_request import LinkTokenCreateRequest
 from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUser
+from plaid.model.accounts_get_request import AccountsGetRequest
 from plaid.model.item_public_token_exchange_request import (
     ItemPublicTokenExchangeRequest,
 )
@@ -52,5 +53,11 @@ class Client:
             public_token=public_token,
         )
         res = self.plaid_client.item_public_token_exchange(req)
+
+        return res.to_dict()
+
+    def get_account_info(self, access_token: str) -> dict:
+        req = AccountsGetRequest(access_token=access_token)
+        res = self.plaid_client.accounts_get(req)
 
         return res.to_dict()

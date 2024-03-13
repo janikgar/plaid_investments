@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Plaid Link{% endblock %}
+
+{% block header %}
+<h2>Accounts</h2>
+{% endblock %}
+
+{% block content %}
+{% if accounts | length > 0 %}
+<table>
+  <tr>
+    <th>Account</th>
+    <th>Type</th>
+    <th>Actions</th>
+  </tr>
+  {% for account in accounts %}
+  <tr>
+    <td><abbr title="{{ account['official_name'] }}">{{ account['friendly_name'] }}</abbr> (x{{ account['mask'] }})</td>
+    <td>{{ account['subtype'] }}</td>
+    <td><button>Get Balance</button></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

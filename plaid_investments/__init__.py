@@ -9,6 +9,7 @@ from flask import (
     flash,
     session,
     g,
+    make_response,
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
@@ -41,15 +42,19 @@ def create_app(test_config: dict = None) -> Flask:
 
     @app.before_request
     def load_logged_in_user():
-        user_id = session.get('user_id')
+        user_id = session.get("user_id")
 
         if user_id is None:
             g.user = None
         else:
-            g.user = db.get_db().execute(
-                'SELECT * FROM user WHERE id = ?',
-                (user_id,),
-            ).fetchone()
+            g.user = (
+                db.get_db()
+                .execute(
+                    "SELECT * FROM user WHERE id = ?",
+                    (user_id,),
+                )
+                .fetchone()
+            )
 
     @app.route("/")
     def hello_world():
@@ -127,18 +132,151 @@ def create_app(test_config: dict = None) -> Flask:
     def link():
         return render_template("link.html")
 
+    @app.route("/accounts")
+    def accounts():
+        account_list = []
+        accounts = get_accounts()
+        if accounts.status_code == 200:
+            account_list = accounts.json["accounts"]
+        return render_template("accounts.html", accounts=account_list)
+
     @app.route("/index")
     def index():
         return render_template("index.html")
 
     @app.route("/api/create_link_token")
     def create_link_token():
-        return jsonify(plaid_client.create_link_token("1"))
+        if g.user:
+            user_id = session.get("user_id")
+            print(type(user_id))
+            return jsonify(plaid_client.create_link_token(str(user_id)))
 
     @app.route("/api/exchange_public_token", methods=["POST"])
     def exchange_public_token():
         public_token = request.json["public_token"]
         return jsonify(plaid_client.exchange_public_token(public_token))
+
+    @app.route("/api/create_item", methods=["POST"])
+    def create_item():
+        item_id = request.json["item_id"]
+        access_token = request.json["access_token"]
+
+        if g.user:
+            this_db = db.get_db()
+            try:
+                this_db.execute(
+                    """
+                    INSERT INTO item (
+                        id,
+                        user_id,
+                        access_token
+                    ) VALUES (?, ?, ?)
+                    """,
+                    (item_id, session["user_id"], access_token),
+                )
+                this_db.commit()
+                return jsonify(
+                    {
+                        "status": "added",
+                        "user": session["user_id"],
+                        "item_id": item_id,
+                        "access_token": access_token,
+                    }
+                )
+            except Exception as e:
+                flash(f"Could not add account: {e}")
+                response = make_response(
+                    jsonify({"error": f"could not add account: {e}"}), 500, []
+                )
+                return response
+
+    @app.route("/api/create_accounts_from_item", methods=["POST"])
+    def create_accounts_from_item():
+        access_token = request.json["access_token"]
+        item_id = request.json["item_id"]
+
+        account_info = plaid_client.get_account_info(access_token=access_token)
+
+        if g.user:
+            this_db = db.get_db()
+            try:
+                for account in account_info["accounts"]:
+                    this_db.execute(
+                        """
+                        INSERT INTO account (
+                            id,
+                            user_id,
+                            item_id,
+                            friendly_name,
+                            official_name,
+                            mask,
+                            account_type,
+                            account_subtype,
+                            persistent_account_id
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?),
+                        """,
+                        (
+                            account["account_id"],
+                            session["user_id"],
+                            item_id,
+                            account["name"],
+                            account["official_name"],
+                            account["mask"],
+                            account["type"],
+                            account["subtype"],
+                            account["persistent_account_id"],
+                        ),
+                    )
+                    this_db.commit()
+                return jsonify(
+                    {
+                        "status": f"added {len(account_info["accounts"])} accounts",
+                        "user": session["user_id"],
+                    }
+                )
+            except Exception as e:
+                flash(f"could not add accounts: {e}")
+                response = make_response(
+                    jsonify({"error": f"could not add accounts: {e}"}), 500, []
+                )
+                return response
+
+    @app.route("/api/get_accounts", methods=["GET"])
+    def get_accounts():
+        if g.user:
+            this_db = db.get_db()
+            try:
+                raw_accounts = this_db.execute(
+                    """
+                    SELECT item_id,
+                        friendly_name,
+                        mask,
+                        account_subtype,
+                        official_name
+                        FROM account WHERE user_id = (?)
+                    """,
+                    (session["user_id"],),
+                ).fetchall()
+
+                accounts = [
+                    {
+                        "item_id": item["item_id"],
+                        "friendly_name": item["friendly_name"],
+                        "mask": item["mask"],
+                        "subtype": item["account_subtype"],
+                        "official_name": item["official_name"],
+                        }
+                    for item in raw_accounts
+                ]
+                return jsonify({
+                    "user_id": session["user_id"],
+                    "accounts": accounts,
+                    })
+            except Exception as e:
+                response = make_response(
+                    jsonify({"error": f"could not get accounts: {e}"}), 500, []
+                )
+                return response
 
     db.init_app(app)
 

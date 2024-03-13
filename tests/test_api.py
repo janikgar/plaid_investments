@@ -6,7 +6,11 @@ import pook
 import uuid
 from flask.testing import FlaskClient
 from plaid.model.link_token_create_response import LinkTokenCreateResponse
-from plaid.model.item_public_token_exchange_response import ItemPublicTokenExchangeResponse
+from plaid.model.item_public_token_exchange_response import (
+    ItemPublicTokenExchangeResponse,
+)
+
+from .conftest import AuthActions
 
 
 @pytest.fixture(autouse=True)
@@ -14,7 +18,7 @@ def use_pook():
     pook.on()
 
 
-def test_create_link_token(flask_client: FlaskClient):
+def test_create_link_token(flask_client: FlaskClient, auth: AuthActions):
     response_dict = {
         "link_token": "0123456",
         "expiration": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -31,8 +35,10 @@ def test_create_link_token(flask_client: FlaskClient):
             _status=200,
         ),
     )
-    response = flask_client.get("/api/create_link_token")
-    assert response.status_code == 200
+    auth.login()
+    with flask_client:
+        response = flask_client.get("/api/create_link_token")
+        assert response.status_code == 200
 
 
 def test_exchange_public_token(flask_client: FlaskClient):

@@ -13,29 +13,6 @@ createLinkToken().then((token) => {
       let tokenResponse = await (await exchangePublicToken(publicToken)).json();
       let itemResponse = await (await createItem(tokenResponse["item_id"], tokenResponse["access_token"])).json();
       let accountResponse = await (await createAccountsFromItem(itemResponse["item_id"], itemResponse["access_token"])).json();
-      console.log(accountResponse);
-      // exchangePublicToken(publicToken).then(tokenResponse => {
-      //   console.log(`tokenResponse: ${tokenResponse}`)
-      //   createItem(
-      //     tokenResponse["item_id"],
-      //     tokenResponse["access_token"],
-      //   ).then(itemResponse => {
-      //     createAccountsFromItem(
-      //       itemResponse["item_id"],
-      //       itemResponse["access_token"]
-      //     )
-      //       .then((accountsResponse) => {
-      //         console.log(accountsResponse);
-      //       })
-      //       .catch((reason) => {
-      //         console.log(`could not create accounts: ${reason}`);
-      //       });
-      //   }).catch(reason => {
-      //     console.log(`could not create item: ${reason}`);
-      //   })
-      // }).catch(reason => {
-      //   console.log(`could not exchange token: ${reason}`);
-      // })
     },
     onLoad: () => {},
     onExit: (err, metadata) => {

@@ -7,23 +7,24 @@
 {% endblock %}
 
 {% block content %}
-{% if accounts | length > 0 %}
-<table>
+<table id="account-table">
   <tr>
     <th>Account</th>
     <th>Type</th>
     <th>Actions</th>
   </tr>
-  {% for account in accounts %}
-  <tr>
-    <td><abbr title="{{ account['official_name'] }}">{{ account['friendly_name'] }}</abbr> (x{{ account['mask'] }})</td>
-    <td>{{ account['subtype'] }}</td>
-    <td><button>Get Balance</button></td>
-  </tr>
-  {% endfor %}
 </table>
-{% endif %}
 {% endblock %}
 
 {% block scripts %}
+<script>
+  const accountTable = document.getElementById('account-table');
+  fetch("/api/get_accounts").then(raw_response => {
+    json_response 
+  })
+  let accounts = await(await fetch("/api/get_accounts").json());
+  for (account of accounts) {
+    console.log(account);
+  }
+</script>
 {% endblock %}

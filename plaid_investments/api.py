@@ -4,6 +4,7 @@ from flask import (
     flash,
     session,
     Blueprint,
+    make_response,
     g,
 )
 from . import db
@@ -28,6 +29,8 @@ def create_link_token():
         user_id = session.get("user_id")
         print(type(user_id))
         return jsonify(plaid_client.create_link_token(str(user_id)))
+            
+    return make_response(jsonify({"error": "not authorized"}), 401, [])
 
 @api.route("/api/exchange_public_token", methods=["POST"])
 def exchange_public_token():
@@ -42,8 +45,8 @@ def create_item():
     if g.user:
         this_db = db.get_db()
         try:
-            this_db.execute(
-                """
+            print(item_id, session["user_id"], access_token)
+            this_db.execute("""
                 INSERT INTO item (
                     id,
                     user_id,
@@ -62,20 +65,21 @@ def create_item():
                 }
             )
         except Exception as e:
-            flash(f"Could not add account: {e}")
+            flash(f"could not add item: {e}")
             response = make_response(
-                jsonify({"error": f"could not add account: {e}"}), 500, []
+                jsonify({"error": f"could not add item: {e}"}), 500, []
             )
             return response
+
+    return make_response(jsonify({"error": "not authorized"}), 401, [])
 
 @api.route("/api/create_accounts_from_item", methods=["POST"])
 def create_accounts_from_item():
     access_token = request.json["access_token"]
     item_id = request.json["item_id"]
 
-    account_info = plaid_client.get_account_info(access_token=access_token)
-
     if g.user:
+        account_info = plaid_client.get_account_info(access_token=access_token)
         this_db = db.get_db()
         try:
             for account in account_info["accounts"]:
@@ -91,7 +95,7 @@ def create_accounts_from_item():
                         account_type,
                         account_subtype,
                         persistent_account_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?),
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         account["account_id"],
@@ -118,6 +122,8 @@ def create_accounts_from_item():
                 jsonify({"error": f"could not add accounts: {e}"}), 500, []
             )
             return response
+
+    return make_response(jsonify({"error": "not authorized"}), 401, [])
 
 @api.route("/api/get_accounts", methods=["GET"])
 def get_accounts():

@@ -161,3 +161,5 @@ def get_accounts():
                 jsonify({"error": f"could not get accounts: {e}"}), 500, []
             )
             return response
+    else:
+        return make_response(jsonify({"error": "not authorized"}), 401, [])

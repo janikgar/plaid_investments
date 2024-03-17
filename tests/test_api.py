@@ -211,3 +211,29 @@ def test_create_accounts_from_item(
         )
         assert response.status_code == response_code
         assert re.search(response_text, response.get_data(as_text=True))
+
+
+@pytest.mark.parametrize(
+    "logged_in,response_code,response_text",
+    [
+        (True, 200, "accounts"),
+        (False, 401, "not authorized"),
+    ],
+)
+def test_get_accounts(
+    flask_client: FlaskClient,
+    auth: AuthActions,
+    logged_in: bool,
+    response_code: int,
+    response_text: str,
+):
+    if logged_in:
+        if response_code == 500:
+            auth.alt_login()
+        else:
+            auth.login()
+
+    with flask_client:
+        response = flask_client.get("/api/get_accounts")
+        assert response.status_code == response_code
+        assert re.search(response_text, response.get_data(as_text=True))

@@ -6,6 +6,7 @@ from flask import (
     Blueprint,
     make_response,
     g,
+    Response,
 )
 from . import db
 from .client import Client
@@ -24,7 +25,7 @@ plaid_client.init_plaid_client()
 api = Blueprint('api',__name__)
 
 @api.route("/api/create_link_token")
-def create_link_token():
+def create_link_token() -> Response:
     if g.user:
         user_id = session.get("user_id")
         print(type(user_id))
@@ -33,12 +34,12 @@ def create_link_token():
     return make_response(jsonify({"error": "not authorized"}), 401, [])
 
 @api.route("/api/exchange_public_token", methods=["POST"])
-def exchange_public_token():
+def exchange_public_token() -> Response:
     public_token = request.json["public_token"]
     return jsonify(plaid_client.exchange_public_token(public_token))
 
 @api.route("/api/create_item", methods=["POST"])
-def create_item():
+def create_item() -> Response:
     item_id = request.json["item_id"]
     access_token = request.json["access_token"]
 
@@ -74,7 +75,7 @@ def create_item():
     return make_response(jsonify({"error": "not authorized"}), 401, [])
 
 @api.route("/api/create_accounts_from_item", methods=["POST"])
-def create_accounts_from_item():
+def create_accounts_from_item() -> Response:
     access_token = request.json["access_token"]
     item_id = request.json["item_id"]
 
@@ -126,7 +127,7 @@ def create_accounts_from_item():
     return make_response(jsonify({"error": "not authorized"}), 401, [])
 
 @api.route("/api/get_accounts", methods=["GET"])
-def get_accounts():
+def get_accounts() -> Response:
     if g.user:
         this_db = db.get_db()
         try:
@@ -136,7 +137,8 @@ def get_accounts():
                     friendly_name,
                     mask,
                     account_subtype,
-                    official_name
+                    official_name,
+                    id
                     FROM account WHERE user_id = (?)
                 """,
                 (session["user_id"],),
@@ -149,6 +151,7 @@ def get_accounts():
                     "mask": item["mask"],
                     "subtype": item["account_subtype"],
                     "official_name": item["official_name"],
+                    "account_id": item["id"],
                     }
                 for item in raw_accounts
             ]
@@ -163,3 +166,41 @@ def get_accounts():
             return response
     else:
         return make_response(jsonify({"error": "not authorized"}), 401, [])
+
+@api.route("/api/get_account_balance")
+def get_account_balance():
+    if g.user:
+        item = request.args['item']
+        account_ids = request.args['account_ids']
+        if type(account_ids) == str:
+            account_ids = [account_ids]
+
+        access_token = access_token_for_item(item)
+
+        account_balance_info = plaid_client.get_account_balance(access_token,item, account_ids)
+        accounts_with_balance = [
+            {
+                "account_id": account["account_id"],
+                "balance_available": account["balances"]["available"],
+                "balance_current": account["balances"]["current"],
+                "balance_limit": account["balances"]["limit"],
+                "currency": account["balances"]["iso_currency_code"]
+            } for account in account_balance_info['accounts']
+        ]
+        return jsonify({
+            "user_id": session["user_id"],
+            "item": item,
+            "accounts_balances": accounts_with_balance,
+        })
+    else:
+        return make_response(jsonify({"error": "not authorized"}), 401, [])
+
+def access_token_for_item(item_id: str) -> str:
+    if g.user:
+        this_db = db.get_db()
+        try:
+            row = this_db.execute("SELECT access_token FROM item WHERE id = (?)", (item_id,)).fetchone()
+            return row['access_token']
+        except Exception as e:
+            raise Exception(f"could not get access_token for item {item_id}: {e}")
+    pass

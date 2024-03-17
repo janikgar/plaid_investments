@@ -11,7 +11,7 @@
   <tr>
     <td><abbr class="full-name" title="full_name">name</abbr><span class="mask"> (xmask)</span></td>
     <td class="subtype"></td>
-    <td><button type="button">Get Balance</button></td>
+    <td><button type="button" class="getBalance">Get Balance</button></td>
   </tr>
 </template>
 
@@ -28,44 +28,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-  const accountTable = document.getElementById("account-table");
-  async function getAccounts() {
-    let accountResponse = await fetch("/api/get_accounts");
-    let jsonResponse = await accountResponse.json();
-    if ("accounts" in jsonResponse) {
-      let accounts = jsonResponse["accounts"]
-      for (account of accounts) {
-        if ("content" in document.createElement("template")) {
-          let template = document.querySelector("#row-template");
-          let clone = template.content.cloneNode(true);
-
-          let accountName = clone.querySelector(".full-name");
-          accountName.title = account["official_name"]
-          accountName.innerText = account["friendly_name"]
-          
-          let mask = clone.querySelector(".mask");
-          mask.innerText = ` (x${account["mask"]})`
-
-          let subtype = clone.querySelector(".subtype");
-          subtype.innerText = account["subtype"];
-
-          accountTable.append(clone);
-        }
-      }
-    }
-  }
-
-  getAccounts();
-  // fetch("/api/get_accounts").then(async raw_response => {
-  //   let jsonResponse  = await raw_response.json();
-  //   let accounts = jsonResponse['accounts'];
-  //   console.log(accounts);
-  //   for (account of accounts) {
-  //     let row = document.createElement("tr");
-  //     let accountNameCell = 
-  //     accountTable.append(row);
-  //   }
-  // })
-</script>
+<script src='{{ url_for('static', filename='accounts.js' ) }}'></script>
 {% endblock %}

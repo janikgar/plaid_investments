@@ -9,6 +9,7 @@ from plaid.model.products import Products
 from plaid.model.link_token_create_request import LinkTokenCreateRequest
 from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUser
 from plaid.model.accounts_get_request import AccountsGetRequest
+from plaid.model.accounts_balance_get_request import AccountsBalanceGetRequest
 from plaid.model.item_public_token_exchange_request import (
     ItemPublicTokenExchangeRequest,
 )
@@ -59,5 +60,11 @@ class Client:
     def get_account_info(self, access_token: str) -> dict:
         req = AccountsGetRequest(access_token=access_token)
         res = self.plaid_client.accounts_get(req)
+
+        return res.to_dict()
+
+    def get_account_balance(self, access_token: str, item: str, account_ids: list[str] = []):
+        req = AccountsBalanceGetRequest(access_token=access_token, options={"account_ids": account_ids})
+        res = self.plaid_client.accounts_balance_get(req)
 
         return res.to_dict()

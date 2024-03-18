@@ -228,12 +228,111 @@ def test_get_accounts(
     response_text: str,
 ):
     if logged_in:
-        if response_code == 500:
-            auth.alt_login()
-        else:
-            auth.login()
+        auth.login()
 
     with flask_client:
         response = flask_client.get("/api/get_accounts")
+        assert response.status_code == response_code
+        assert re.search(response_text, response.get_data(as_text=True))
+
+
+@pytest.mark.parametrize(
+    "logged_in,response_code,response_text,item,account_ids",
+    [
+        (True, 200, "accounts_balances", "010101", "0123456"),
+        (False, 401, "not authorized", "", ""),
+        (True, 200, "accounts_balances", "010101", "0123456,78910"),
+        (True, 200, "accounts_balances", "777777", "0123456,78910"),
+    ],
+)
+def test_get_account_balance(
+    flask_client: FlaskClient,
+    auth: AuthActions,
+    logged_in: bool,
+    response_code: int,
+    response_text: str,
+    item: str,
+    account_ids: str,
+):
+    if logged_in:
+        auth.login()
+
+    with flask_client:
+        mock_json = {
+            "accounts": [
+                {
+                    "account_id": "0",
+                    "balances": {
+                        "available": 0.0,
+                        "current": 1.1,
+                        "limit": 2.2,
+                        "iso_currency_code": "3",
+                        "unofficial_currency_code": "4",
+                    },
+                    "mask": "2",
+                    "name": "3",
+                    "official_name": "4",
+                    "type": "foo",
+                    "subtype": "bar",
+                    "persistent_account_id": "5",
+                },
+            ],
+            "request_id": "",
+            "item": {
+                "item_id": "",
+                "webhook": "",
+                "error": {
+                    "error_type": "",
+                    "error_code": "",
+                    "error_message": "",
+                    "display_message": "",
+                },
+                "available_products": [],
+                "billed_products": [],
+                "consent_expiration_time": None,
+                "update_type": "",
+            },
+        }
+        mock_response = AccountsGetResponse(
+            accounts=[
+                AccountBase(
+                    "0",
+                    AccountBalance(0.0, 1.1, 2.2, "3", "4"),
+                    "2",
+                    "3",
+                    "4",
+                    AccountType("foo"),
+                    AccountSubtype("bar"),
+                    persistent_account_id="5",
+                ),
+            ],
+            request_id="",
+            item=Item(
+                item_id="",
+                webhook="",
+                error=PlaidError(
+                    error_type=PlaidErrorType(""),
+                    error_code="",
+                    error_message="",
+                    display_message="",
+                ),
+                available_products=[],
+                billed_products=[],
+                consent_expiration_time=None,
+                update_type="",
+            ),
+            _body=json.dumps(mock_json),
+            _headers="",
+            _status=200,
+        )
+
+        pook.post(
+            "https://sandbox.plaid.com:443/accounts/balance/get",
+            response=mock_response,
+        )
+
+        response = flask_client.get(
+            f"/api/get_account_balance?item={item}&account_ids={account_ids}"
+        )
         assert response.status_code == response_code
         assert re.search(response_text, response.get_data(as_text=True))

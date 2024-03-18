@@ -200,6 +200,8 @@ def access_token_for_item(item_id: str) -> str:
         this_db = db.get_db()
         try:
             row = this_db.execute("SELECT access_token FROM item WHERE id = (?)", (item_id,)).fetchone()
+            if row is None:
+                return ""
             return row['access_token']
         except Exception as e:
             raise Exception(f"could not get access_token for item {item_id}: {e}")

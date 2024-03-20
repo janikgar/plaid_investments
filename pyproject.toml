@@ -17,7 +17,7 @@ flask = "^3.0.2"
 pytest = "^8.0.1"
 pook = "^1.4.2"
 coverage = "^7.4.3"
-black = "^24.2.0"
+black = "^24.3.0"
 
 [build-system]
 requires = ["poetry-core"]
